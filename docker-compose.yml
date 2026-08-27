@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # Frontend (React + Nginx)
+  frontend:
+    build: ./frontend
+    container_name: diagramcraft-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - diagramcraft-network
+    restart: unless-stopped
+
+  # Backend (FastAPI + LaTeX)
+  backend:
+    build: ./backend
+    container_name: diagramcraft-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DATABASE_NAME=diagramcraft
+    volumes:
+      - backend_output:/app/output
+    depends_on:
+      - mongodb
+    networks:
+      - diagramcraft-network
+    restart: unless-stopped
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: diagramcraft-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - diagramcraft-network
+    restart: unless-stopped
+
+networks:
+  diagramcraft-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  backend_output:
